@@ -1,0 +1,14 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <option name="myLocal" value="true" />
+    <inspection_tool class="SSBasedInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <searchConfiguration name="xml @{.*} resource recognition" text="&lt;import resource=&quot;@{$content$}&quot;/&gt;" recursive="false" caseInsensitive="false" type="XML">
+        <constraint name="content" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <replaceConfiguration name="xml @{.*} resource replace" text="&lt;import resource=&quot;@{$content$}&quot;/&gt;" recursive="false" caseInsensitive="false" type="XML" reformatAccordingToStyle="true" shortenFQN="true" replacement="&lt;import resource=&quot;@{$content$}&quot;/&gt;">
+        <constraint name="content" minCount="0" maxCount="2147483647" within="" contains="" />
+      </replaceConfiguration>
+    </inspection_tool>
+  </profile>
+</component>
