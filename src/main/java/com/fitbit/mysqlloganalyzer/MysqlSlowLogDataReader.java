@@ -1,7 +1,7 @@
 package com.fitbit.mysqlloganalyzer;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import com.google.common.io.LineProcessor;
 import org.joda.time.format.DateTimeFormat;
@@ -9,7 +9,9 @@ import org.joda.time.format.DateTimeFormatter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ivanbahdanau
@@ -26,11 +28,11 @@ public class MysqlSlowLogDataReader {
     private static final String QC_HIT_INDICATOR = "# QC_Hit:";
     private static final String FILE_SORT_INDICATOR = "# Filesort: ";
 
-    public List<MysqlSlowLogObject.MysqlLogRecord> readFile(final File mysqlSlowLogFile) throws IOException {
-        return Files.readLines(mysqlSlowLogFile, Charsets.UTF_8, new LineProcessor<List<MysqlSlowLogObject.MysqlLogRecord>>() {
+    public Map<String, List<MysqlSlowLogObject.MysqlLogRecord>> readFile(final File mysqlSlowLogFile) throws IOException {
+        return Files.readLines(mysqlSlowLogFile, Charsets.UTF_8, new LineProcessor<Map<String, List<MysqlSlowLogObject.MysqlLogRecord>>>() {
 
             private MysqlSlowLogObject.MysqlLogRecord.Builder builder;
-            List<MysqlSlowLogObject.MysqlLogRecord> collectedData = Lists.newArrayList();
+            Map<String, List<MysqlSlowLogObject.MysqlLogRecord>> collectedData = Maps.newTreeMap();
 
             @Override
             public boolean processLine(String line) throws IOException {
@@ -40,7 +42,7 @@ public class MysqlSlowLogDataReader {
                 }
                 if (line.contains(TIME_INDICATOR)) {
                     if (builder != null) {
-                        collectedData.add(builder.build());
+                        addToMap(builder.build());
                     }
                     builder = MysqlSlowLogObject.MysqlLogRecord.newBuilder();
                     builder.setEventDateTime(DATE_TIME_FORMAT.parseDateTime(line.substring(TIME_INDICATOR.length()).replaceAll("  ", " ")).getMillis());
@@ -90,11 +92,19 @@ public class MysqlSlowLogDataReader {
             }
 
             @Override
-            public List<MysqlSlowLogObject.MysqlLogRecord> getResult() {
-                collectedData.add(builder.build());
+            public Map<String, List<MysqlSlowLogObject.MysqlLogRecord>> getResult() {
+                addToMap(builder.build());
                 return collectedData;
             }
-        });
 
+            private void addToMap(MysqlSlowLogObject.MysqlLogRecord objectToAdd) {
+                String sqlQuery = objectToAdd.getSqlQuery().replaceAll("\\.*(=|<|>)(\\d+|('([-@\\.0-9a-zA-Z: ]*)'))", "");
+                if (!collectedData.containsKey(sqlQuery)) {
+                    collectedData.put(sqlQuery, new ArrayList<>());
+                }
+                collectedData.get(sqlQuery).add(objectToAdd);
+
+            }
+        });
     }
 }
